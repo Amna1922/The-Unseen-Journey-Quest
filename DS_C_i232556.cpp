@@ -1,7 +1,7 @@
 #include <iostream>
 #include <cstdlib>
 #include <ctime>
-// #include <curses.h>
+#include <ncurses.h>
 
 using namespace std;
 
@@ -153,7 +153,7 @@ public:
         player_node->isplayer = true;
         player_moves--; // shifted to given node and move --
     }
-    void undo()
+    void undo_z()
     {
         if (!undo_feature.isempty() && undo > 0)
         {
@@ -257,13 +257,13 @@ public:
         int d = cityblockdistance(player->player_node, key);
         if (!player->undo_feature.isempty() && d < cityblockdistance(player->undo_feature.peek(), key))
         {
-            cout << "Getting closer ! to key";
-            // mvprintw(rows+1 , 0 , "Getting closer ! to key");
+            // cout << "Getting closer ! to key";
+            mvprintw(rows + 1, 0, "Getting closer ! to key");
         }
         else
         {
-            // mvprintw(rows+1 , 0 , "Getting away from key");
-            cout << "away";
+            mvprintw(rows + 1, 0, "Getting away from key");
+            // cout << "away";
         }
         // refresh();
     }
@@ -272,56 +272,30 @@ public:
         return &start[r * cols + c];
     }
 
-    // void print_pdcurse()
-    // {
-    //     clear();
-    //     for (int i = 0; i < rows; i++)
-    //     {
-    //         for (int j = 0; j < cols; j++)
-    //         {
-    //             Node *nn = access(i, j);
-    //             move(i, j);
-    //             if (nn->isplayer)
-    //                 printw("P");
-    //             else if (nn->iskey)
-    //                 printw("K");
-    //             else if (nn->isdoor)
-    //                 printw("D");
-    //             else if (nn->isbomb)
-    //                 printw("B");
-    //             else if (nn->iscoin)
-    //                 printw("C");
-    //             else
-    //                 printw(".");
-    //         }
-    //     }
-    //     refresh();
-    // }
-
-    void print_old()
+    void print()
     {
+        clear();
         for (int i = 0; i < rows; i++)
         {
             for (int j = 0; j < cols; j++)
             {
                 Node *nn = access(i, j);
-                // move(i, j);
+                move(i, j);
                 if (nn->isplayer)
-                    cout << "P";
+                    printw("P");
                 else if (nn->iskey)
-                    cout << "K";
+                    printw("K");
                 else if (nn->isdoor)
-                    cout << "D";
+                    printw("D");
                 else if (nn->isbomb)
-                    cout << "B";
+                    printw("B");
                 else if (nn->iscoin)
-                    cout << "C";
+                    printw("C");
                 else
-                    cout << ".";
+                    printw(".");
             }
-            cout << endl;
         }
-        cout << endl;
+        refresh();
     }
 };
 
@@ -351,5 +325,78 @@ public:
             moves = 0;
         }
         maze = new Maze(grid, grid);
+        int a = maze->cityblockdistance(maze->player->player_node, maze->key);
+        int b = maze->cityblockdistance(maze->key, maze->door);
+        maze->player->player_moves = a + b + moves;
+        maze->player->player_moves = undo;
+    }
+
+    void start()
+    {
+        int a;
+        while (maze->player->player_moves > 0)
+        {
+            maze->print();
+            mvprintw(maze->rows + 2, 0, "MOVES LEFT : %d  UNDO MOVES: %d", maze->player->player_moves, maze->player->undo);
+            refresh();
+
+            a = getch();
+            if (a == 'u')
+            {
+                maze->player->undo_z();
+            }
+            else
+            {
+                game_move(a);
+                maze->senser();
+            }
+            if (maze->player->player_node == maze->key)
+            {
+                mvprintw(maze->rows + 3, 0, "KEY = SUCCESS");
+                refresh();
+            }
+            if (maze->player->player_node == maze->door && maze->key->iskey)
+            {
+                mvprintw(maze->rows + 4, 0, "ESCAPE = SUCCESS");
+                refresh();
+                break;
+            }
+        }
+        mvprintw(maze->rows + 5, 0, "GAME OVER");
+        refresh();
+    }
+
+    void game_move(int a)
+    {
+        Node *nn = nullptr;
+        if (a == KEY_UP && maze->player->player_node->up)
+            nn = maze->player->player_node->up;
+        else if (a == KEY_DOWN && maze->player->player_node->down)
+            nn = maze->player->player_node->down;
+        else if (a == KEY_LEFT && maze->player->player_node->left)
+            nn = maze->player->player_node->left;
+        else if (a == KEY_RIGHT && maze->player->player_node->right)
+            nn = maze->player->player_node->right;
+        if (nn != nullptr)
+        {
+            maze->player->move(nn);
+        }
     }
 };
+
+int main()
+{
+    int i;
+    cout << "Select level!!";
+    cin >> i;
+    initscr();            // Start ncurses mode
+    keypad(stdscr, TRUE); // Enable keypad for arrow keys
+    noecho();             // Don't show typed characters
+    cbreak();             // Disable line buffering
+
+    GAME g(i);
+    g.start();
+
+    endwin(); // ending ncurse mode
+    return 0;
+}
