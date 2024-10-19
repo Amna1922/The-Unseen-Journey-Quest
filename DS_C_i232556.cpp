@@ -398,7 +398,53 @@ public:
             senser();
         else
             senser_door();
-        refresh();
+        // refresh();
+    }
+
+    void print_gameover()
+    {
+        // clear();
+        move(11, 11);
+
+        for (int i = 0; i < cols + 2; i++)
+            printw("# ");
+        printw("\n");
+
+        for (int i = 0; i < rows; i++)
+        {
+            printw("           # ");
+            for (int j = 0; j < cols; j++)
+            {
+                Node *nn = access(i, j);
+                if (nn->isplayer)
+                {
+                    attron(COLOR_PAIR(3));
+                    printw("P "); // red
+                    attroff(COLOR_PAIR(3));
+                }
+                // 2 . green _ 4.red
+                else if (nn->iskey)
+                    printw("K ");
+                else if (nn->isdoor)
+                    printw("D ");
+                else if (nn->isbomb)
+                    printw("B ");
+                else if (nn->iscoin)
+                {
+                    attron(COLOR_PAIR(4));
+                    printw("C "); // yellow
+                    attroff(COLOR_PAIR(4));
+                }
+                else
+                    printw(". ");
+            }
+            printw("# \n"); // green
+        }
+        printw("           ");
+        for (int i = 0; i < cols + 2; i++)
+            printw("# ");
+        printw("\n");
+        // refresh();
     }
 };
 
@@ -406,7 +452,6 @@ class GAME
 {
 public:
     Maze *maze;
-    // Player *player;
     bool iskeygot = false;
     int level;
     GAME(int l)
@@ -440,7 +485,6 @@ public:
 
     void start()
     {
-        // game_over();
         int a;
         while (maze->player->player_moves > 0)
         {
@@ -499,60 +543,99 @@ public:
         game_over();
     }
 
+    void start_display_gameover()
+    {
+        bool c = 1;
+        while (c)
+        {
+            maze->print_gameover();
+            bool check = true;
+            mvprintw(0, 0, "__________________________________________________");
+            attron(COLOR_PAIR(5));
+            if (level == 1)
+                mvprintw(2, 0, "               GAME_MODE : EASY           ");
+            else if (level == 2)
+                mvprintw(2, 0, "                GAME_MODE : MEDIUM         ");
+            else
+                mvprintw(2, 0, "               GAME_MODE : HARD           ");
+
+            mvprintw(3, 0, "        MOVES LEFT : %d   UNDO MOVES: %d", maze->player->player_moves, maze->player->undo);
+            mvprintw(4, 0, "        COINS : %d         SCORE: %d", maze->collected_coins, maze->player->player_score + maze->player->player_moves);
+            mvprintw(5, 0, "                   KEY STATUS : %d", iskeygot);
+
+            if (iskeygot && check)
+                mvprintw(7, 0, "        KEY got! now find door");
+
+            if (maze->player->player_node == maze->door && iskeygot)
+                mvprintw(7, 0, "YOU ESCAPEd SUCCESS");
+            attroff(COLOR_PAIR(5));
+            mvprintw(8, 0, "__________________________________________________");
+            c = 0;
+        }
+    }
+
     void game_over()
     {
+        clear();
         bool n = true;
+        start_display_gameover();
         nodelay(stdscr, TRUE);
         do
         {
-            clear();
-
+            int x;
+            if (level == 1)
+                x = 24;
+            else if (level == 2)
+                x = 28;
+            else
+                x = 33;
+            mvprintw(x, 0, "__________________________________________________");
             if (maze->door->isdoor == false)
             {
                 attron(COLOR_PAIR(2));
 
                 if (n)
                 {
-                    mvprintw(4, 0, "     WINNER WINNER CHICKEN -DINNER ");
-                    mvprintw(5, 0, "                  O");
-                    mvprintw(6, 0, "                v-|-v");
-                    mvprintw(7, 0, "                 / \\");
+                    mvprintw(x + 1, 0, "     WINNER WINNER CHICKEN -DINNER ");
+                    mvprintw(x + 2, 0, "                  O");
+                    mvprintw(x + 3, 0, "                v-|-v");
+                    mvprintw(x + 4, 0, "                 / \\");
                     n = false;
                 }
                 else
                 {
-                    mvprintw(4, 0, "     WINNER WINNER CHICKEN -DINNER ");
-                    mvprintw(5, 0, "                  o");
-                    mvprintw(6, 0, "                ^~|~^");
-                    mvprintw(7, 0, "                  |");
+                    mvprintw(x + 1, 0, "     WINNER WINNER CHICKEN -DINNER ");
+                    mvprintw(x + 2, 0, "                  o");
+                    mvprintw(x + 3, 0, "                ^~|~^");
+                    mvprintw(x + 4, 0, "                  |");
                     n = true;
                 }
 
                 attroff(COLOR_PAIR(2)); // Turn off color
 
-                mvprintw(10, 0, "Press q to exit");
+                mvprintw(x + 8, 0, "Press q to exit");
             }
             else
             {
                 attron(COLOR_PAIR(1));
                 if (n)
                 {
-                    mvprintw(4, 0, "    MOYEE MOYEE");
-                    mvprintw(5, 0, "                  x");
-                    mvprintw(6, 0, "                --|--");
-                    mvprintw(7, 0, "                 / \\");
+                    mvprintw(x + 1, 0, "    MOYEE MOYEE");
+                    mvprintw(x + 2, 0, "                  x");
+                    mvprintw(x + 3, 0, "                --|--");
+                    mvprintw(x + 4, 0, "                 / \\");
                     n = false;
                 }
                 else
                 {
-                    mvprintw(4, 0, "    MOYEE MOYEE");
-                    mvprintw(5, 0, "                  X");
-                    mvprintw(6, 0, "                ~~|~~");
-                    mvprintw(7, 0, "                  |");
+                    mvprintw(x + 1, 0, "    MOYEE MOYEE");
+                    mvprintw(x + 2, 0, "                  X");
+                    mvprintw(x + 3, 0, "                ~~|~~");
+                    mvprintw(x + 4, 0, "                  |");
                     n = true;
                 }
                 attroff(COLOR_PAIR(1));
-                mvprintw(10, 0, "Press q to exit");
+                mvprintw(x + 8, 0, "Press q to exit");
             }
 
             refresh();
