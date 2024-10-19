@@ -65,13 +65,24 @@ public:
     }
     void display()
     {
-        node *temp = top;
-        while (temp != nullptr)
-        {
-            cout << temp->data1 << " - " << temp->data2 << " , ";
-            temp = temp->next;
-        }
-        cout << endl;
+        // node *temp = top;
+        move(9, 0);
+        reversee(top);
+        printw("\n");
+        // while (temp != nullptr)
+        // {
+        //     printw(" [%d,%d] ", temp->data1, temp->data2);
+        //     temp = temp->next;
+        // }
+        refresh();
+    }
+    void reversee(node *temp)
+    {
+        if (temp == nullptr)
+            return;
+        reversee(temp->next);
+        printw(" [%d,%d] ", temp->data1, temp->data2);
+        refresh();
     }
 };
 
@@ -567,9 +578,10 @@ public:
                 mvprintw(7, 0, "        KEY got! now find door");
 
             if (maze->player->player_node == maze->door && iskeygot)
-                mvprintw(7, 0, "YOU ESCAPEd SUCCESS");
+                mvprintw(8, 0, "        YOU ESCAPED SUCCESSFULLY");
             attroff(COLOR_PAIR(5));
-            mvprintw(8, 0, "__________________________________________________");
+            maze->coin_s.display();
+            mvprintw(10, 0, "__________________________________________________");
             c = 0;
         }
     }
@@ -578,17 +590,18 @@ public:
     {
         clear();
         bool n = true;
+
         start_display_gameover();
         nodelay(stdscr, TRUE);
         do
         {
             int x;
             if (level == 1)
-                x = 24;
+                x = 26;
             else if (level == 2)
-                x = 28;
+                x = 30;
             else
-                x = 33;
+                x = 35;
             mvprintw(x, 0, "__________________________________________________");
             if (maze->door->isdoor == false)
             {
