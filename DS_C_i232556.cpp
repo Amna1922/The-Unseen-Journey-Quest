@@ -1,6 +1,7 @@
 // g++ -o a pd.cpp -lncurses && ./a
 // git add .
 // git commit -m "msg"
+
 #include <iostream>
 #include <cstdlib>
 #include <string>
@@ -292,7 +293,7 @@ public:
         {
             remove_coins();
             place_coins();
-            coin_timer = timer(0);
+            coin_timer = time(0);
         }
     }
 
@@ -311,20 +312,24 @@ public:
     void senser()
     {
         int d = cityblockdistance(player->player_node, key);
+        attron(COLOR_PAIR(5));
         if (!player->undo_feature.isempty() && d < cityblockdistance(player->undo_feature.peek(), key))
-            mvprintw(rows + 4, 0, "Getting closer to key");
+            mvprintw(6, 0, "        Getting closer to key");
         else
-            mvprintw(rows + 4, 0, "Getting away from key");
+            mvprintw(6, 0, "        Getting away from key");
+        attroff(COLOR_PAIR(5));
         // cout << "away";
         refresh();
     }
     void senser_door()
     {
         int d = cityblockdistance(player->player_node, door);
+        attron(COLOR_PAIR(5));
         if (!player->undo_feature.isempty() && d < cityblockdistance(player->undo_feature.peek(), key))
-            mvprintw(rows + 4, 0, "Getting closer to exit door");
+            mvprintw(6, 0, "        Getting closer to exit door");
         else
-            mvprintw(rows + 4, 0, "Getting away from exit door");
+            mvprintw(6, 0, "        Getting away from exit door");
+        attroff(COLOR_PAIR(5));
         refresh();
     }
 
@@ -339,6 +344,7 @@ public:
         {
             c->iscoin = 0;
             player->undo++;
+            player->player_score += 2;
             collected_coins++;
             coin_s.push(c->r, c->c);
             coin_s.display();
@@ -348,20 +354,25 @@ public:
     void print()
     {
         clear();
-        move(0, 0);
+        move(11, 11);
 
         for (int i = 0; i < cols + 2; i++)
             printw("# ");
+        printw("\n");
+
         for (int i = 0; i < rows; i++)
         {
-            move(i + 1, 0); // Move to the start of the row, adding 1 to leave space for the top boundary
-            printw("# ");
+            printw("           # ");
             for (int j = 0; j < cols; j++)
             {
                 Node *nn = access(i, j);
-                move(i + 1, (j + 1) * 2);
                 if (nn->isplayer)
-                    printw("P ");
+                {
+                    attron(COLOR_PAIR(3));
+                    printw("P "); // red
+                    attroff(COLOR_PAIR(3));
+                }
+                // 2 . green _ 4.red
                 else if (nn->iskey)
                     printw("K ");
                 else if (nn->isdoor)
@@ -369,15 +380,20 @@ public:
                 else if (nn->isbomb)
                     printw("B ");
                 else if (nn->iscoin)
-                    printw("C ");
+                {
+                    attron(COLOR_PAIR(4));
+                    printw("C "); // yellow
+                    attroff(COLOR_PAIR(4));
+                }
                 else
                     printw(". ");
             }
-            printw("# ");
+            printw("# \n"); // green
         }
-        move(rows + 1, 0);
+        printw("           ");
         for (int i = 0; i < cols + 2; i++)
             printw("# ");
+        printw("\n");
         if (key->iskey)
             senser();
         else
@@ -424,24 +440,34 @@ public:
 
     void start()
     {
+        // game_over();
         int a;
         while (maze->player->player_moves > 0)
         {
             bool check = true;
             maze->update_coins();
             maze->print();
-            mvprintw(maze->rows + 3, 0, "MOVES LEFT : %d  UNDO MOVES: %d", maze->player->player_moves, maze->player->undo);
+
+            mvprintw(0, 0, "__________________________________________________");
+            attron(COLOR_PAIR(5));
             if (level == 1)
-                mvprintw(maze->rows + 5, 0, "GAME_MODE : EASY           KEY STATUS : %d", iskeygot);
+                mvprintw(2, 0, "               GAME_MODE : EASY           ");
             else if (level == 2)
-                mvprintw(maze->rows + 5, 0, "GAME_MODE : MEDIUM         KEY STATUS : %d", iskeygot);
+                mvprintw(2, 0, "                GAME_MODE : MEDIUM         ");
             else
-                mvprintw(maze->rows + 5, 0, "GAME_MODE : HARD           KEY STATUS : %d", iskeygot);
+                mvprintw(2, 0, "               GAME_MODE : HARD           ");
+
+            mvprintw(3, 0, "        MOVES LEFT : %d   UNDO MOVES: %d", maze->player->player_moves, maze->player->undo);
+            mvprintw(4, 0, "        COINS : %d         SCORE: %d", maze->collected_coins, maze->player->player_score);
+            mvprintw(5, 0, "                   KEY STATUS : %d", iskeygot);
+
             if (iskeygot && check)
-                mvprintw(maze->rows + 6, 0, "KEY got! now find door");
+                mvprintw(7, 0, "        KEY got! now find door");
 
             if (maze->player->player_node == maze->door && iskeygot)
-                mvprintw(maze->rows + 7, 0, "YOU ESCAPEd SUCCESS");
+                mvprintw(7, 0, "YOU ESCAPEd SUCCESS");
+            attroff(COLOR_PAIR(5));
+            mvprintw(8, 0, "__________________________________________________");
 
             refresh();
 
@@ -475,15 +501,64 @@ public:
 
     void game_over()
     {
-        clear();
+        bool n = true;
+        nodelay(stdscr, TRUE);
+        do
+        {
+            clear();
 
-        if (maze->door->isdoor == false)
-            mvprintw(0, 0, "YOU WON");
-        else
-            mvprintw(0, 0, "GAME OVER");
-        mvprintw(2, 0, "Press q to exit");
-        while (getch() != 'q')
-            ;
+            if (maze->door->isdoor == false)
+            {
+                attron(COLOR_PAIR(2));
+
+                if (n)
+                {
+                    mvprintw(4, 0, "     WINNER WINNER CHICKEN -DINNER ");
+                    mvprintw(5, 0, "                  O");
+                    mvprintw(6, 0, "                v-|-v");
+                    mvprintw(7, 0, "                 / \\");
+                    n = false;
+                }
+                else
+                {
+                    mvprintw(4, 0, "     WINNER WINNER CHICKEN -DINNER ");
+                    mvprintw(5, 0, "                  o");
+                    mvprintw(6, 0, "                ^~|~^");
+                    mvprintw(7, 0, "                  |");
+                    n = true;
+                }
+
+                attroff(COLOR_PAIR(2)); // Turn off color
+
+                mvprintw(10, 0, "Press q to exit");
+            }
+            else
+            {
+                attron(COLOR_PAIR(1));
+                if (n)
+                {
+                    mvprintw(4, 0, "    MOYEE MOYEE");
+                    mvprintw(5, 0, "                  x");
+                    mvprintw(6, 0, "                --|--");
+                    mvprintw(7, 0, "                 / \\");
+                    n = false;
+                }
+                else
+                {
+                    mvprintw(4, 0, "    MOYEE MOYEE");
+                    mvprintw(5, 0, "                  X");
+                    mvprintw(6, 0, "                ~~|~~");
+                    mvprintw(7, 0, "                  |");
+                    n = true;
+                }
+                attroff(COLOR_PAIR(1));
+                mvprintw(10, 0, "Press q to exit");
+            }
+
+            refresh();
+            napms(150);
+
+        } while (getch() != 'q');
     }
 
     void game_move(int a)
@@ -514,10 +589,18 @@ int main()
     int i;
     cout << "Select level ";
     cin >> i;
-    initscr();            // Start ncurses mode
+    initscr(); // Start ncurses mode
+    start_color();
     keypad(stdscr, TRUE); // Enable keypad for arrow keys
     noecho();             // Don't show typed characters
     cbreak();             // Disable line buffering
+
+    init_pair(1, COLOR_RED, COLOR_BLACK);
+    init_pair(2, COLOR_GREEN, COLOR_BLACK);
+    init_pair(3, COLOR_BLUE, COLOR_BLACK);
+    init_pair(4, COLOR_YELLOW, COLOR_BLACK);
+    init_pair(5, COLOR_MAGENTA, COLOR_BLACK);
+    init_pair(6, COLOR_CYAN, COLOR_BLACK);
 
     GAME g(i);
     g.start();
