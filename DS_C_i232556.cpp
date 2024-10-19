@@ -6,6 +6,7 @@
 #include <string>
 #include <ctime>
 #include <ncurses.h>
+#include <unistd.h>
 
 using namespace std;
 
@@ -174,63 +175,20 @@ public:
     }
 };
 
-class coin : public Node
-{
-public:
-    int r, c;
-    coin()
-    {
-        iscoin = false;
-        r = c = -1;
-    }
-    void activate(int r, int c)
-    {
-        this->r = r;
-        this->c = c;
-        iscoin = true;
-    }
-    void deactivate()
-    {
-        iscoin = false;
-    }
-};
-class Bomb
-{
-public:
-    int r, c;
-    bool isbomb;
-    Bomb()
-    {
-        isbomb = false;
-        r = c = -1;
-    }
-    Bomb(int r, int c)
-    {
-        this->r = r;
-        this->c = c;
-        isbomb = true;
-    }
-    void deactivate()
-    {
-        isbomb = false;
-    }
-};
 class Maze
 {
 public:
     Node *start;
     Node *key;
     Node *door;
-    // Node *coins;
     Node *bombs;
     Player *player; // player object is created here
     int rows, cols;
-    // int index_bombs[5][2];
-    // coin coins[5];
     Node *c1, *c2, *c3, *c4, *c5;
     stack coin_s;
     int collected_coins;
     int row_exit, col_exit, row_key, col_key;
+    time_t coin_timer;
 
     Maze(int r_, int c_)
     {
@@ -242,6 +200,7 @@ public:
         place_coins();
         player = new Player(start);
         collected_coins = 0;
+        coin_timer = time(0);
     }
 
     int absolutevalue(int v)
@@ -303,6 +262,14 @@ public:
         c4 = place_coin();
         c5 = place_coin();
     }
+    void remove_coins()
+    {
+        c1->iscoin = 0;
+        c2->iscoin = 0;
+        c3->iscoin = 0;
+        c4->iscoin = 0;
+        c5->iscoin = 0;
+    }
 
     Node *place_coin()
     {
@@ -317,6 +284,16 @@ public:
         c->r = row;
         c->c = col;
         return c;
+    }
+
+    void update_coins()
+    {
+        if (difftime(time(0), coin_timer) >= 15)
+        {
+            remove_coins();
+            place_coins();
+            coin_timer = timer(0);
+        }
     }
 
     int cityblockdistance(Node *n1, Node *n2)
@@ -413,6 +390,7 @@ class GAME
 {
 public:
     Maze *maze;
+    // Player *player;
     bool iskeygot = false;
     int level;
     GAME(int l)
@@ -450,6 +428,7 @@ public:
         while (maze->player->player_moves > 0)
         {
             bool check = true;
+            maze->update_coins();
             maze->print();
             mvprintw(maze->rows + 3, 0, "MOVES LEFT : %d  UNDO MOVES: %d", maze->player->player_moves, maze->player->undo);
             if (level == 1)
