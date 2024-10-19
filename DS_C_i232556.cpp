@@ -1,4 +1,6 @@
 // g++ -o a pd.cpp -lncurses && ./a
+// git add .
+// git commit -m "msg"
 #include <iostream>
 #include <cstdlib>
 #include <string>
@@ -10,12 +12,14 @@ using namespace std;
 class node
 {
 public:
-    int data;
+    int data1;
+    int data2;
     node *next;
 
-    node(int v)
+    node(int v, int u)
     {
-        data = v;
+        data1 = v;
+        data2 = u;
         next = nullptr;
     }
 };
@@ -29,9 +33,9 @@ public:
     {
         top = nullptr;
     }
-    void push(int value) // first in last out ...insert at tail
+    void push(int value, int v) // first in last out ...insert at tail
     {
-        node *temp = new node(value); // temp->data = value;
+        node *temp = new node(value, v); // temp->data = value;
         temp->next = nullptr;
         if (top == nullptr)
             top = temp;
@@ -43,20 +47,21 @@ public:
         temp = nullptr;
         delete temp;
     }
-    void pop(int value) // delete at tail
+    void pop() // delete at tail
     {
-        node *temp = new node(value);
         if (top == nullptr)
+            return;
+        if (top->next == nullptr)
         {
-            top = temp;
+            delete top;
+            top = nullptr;
             return;
         }
         node *ptr = top;
-        while (ptr->next != nullptr)
+        while (ptr->next->next != nullptr)
             ptr = ptr->next;
-        ptr->next = temp;
-        temp = nullptr;
-        delete temp;
+        delete ptr->next;
+        ptr->next = nullptr;
     }
     void display()
     {
@@ -169,6 +174,48 @@ public:
     }
 };
 
+class coin
+{
+public:
+    int r, c;
+    bool iscoin;
+    Coin()
+    {
+        iscoin = false;
+        r = c = -1;
+    }
+    void activate(int r, int c)
+    {
+        this->r = r;
+        this->c = c;
+        iscoin = true;
+    }
+    void deactivate()
+    {
+        iscoin = false;
+    }
+};
+class Bomb
+{
+public:
+    int r, c;
+    bool isbomb;
+    Coin()
+    {
+        isbomb = false;
+        r = c = -1;
+    }
+    Coin(int r, int c)
+    {
+        this->r = r;
+        this->c = c;
+        isbomb = true;
+    }
+    void deactivate()
+    {
+        isbomb = false;
+    }
+};
 class Maze
 {
 public:
@@ -180,8 +227,13 @@ public:
     Player *player; // player object is created here
     int row_key, col_key, row_exit, col_exit;
     int rows, cols;
-    int index_bombs[5][2];
-    int index_coins[5][2];
+    // int index_bombs[5][2];
+
+    coin coins[5];
+    coin c1, c2, c3, c4, c5;
+    stack coin_s;
+    int total_coins;
+    int collected_coins;
 
     Maze(int r_, int c_)
     {
@@ -191,6 +243,9 @@ public:
         setting_links();
         placeing_keynexit();
         player = new Player(start);
+
+        collected_coins = 0;
+        total_coins = 0;
     }
 
     int absolutevalue(int v)
@@ -241,6 +296,61 @@ public:
         door->isdoor = 1;
         row_key = row;
         col_key = col;
+    }
+
+    void place_coins(int n)
+    {
+        total_coins = n;
+
+        int row = rand() % rows;
+        int col = rand() % cols;
+        while (access(row, col)->isdoor == 1 || access(row, col)->iskey == 1 || access(row1, col1)->iscoin == 1)
+        {
+            row = rand() % rows;
+            col = rand() % cols;
+        }
+        c1.activate(row, col);
+        access(row, col)->iscoin = true;
+
+        int row1 = rand() % rows;
+        int col1 = rand() % cols;
+        while (access(row1, col1)->isdoor == 1 || access(row1, col1)->iskey == 1 || access(row1, col1)->iscoin == 1)
+        {
+            row1 = rand() % rows;
+            col1 = rand() % cols;
+        }
+        c2.activate(row1, col1);
+        access(row1, col1)->iscoin = true;
+
+        int row2 = rand() % rows;
+        int col2 = rand() % cols;
+        while (access(row2, col2)->isdoor == 1 || access(row2, col2)->iskey == 1 || access(row2, col2)->iscoin == 1)
+        {
+            row2 = rand() % rows;
+            col2 = rand() % cols;
+        }
+        c2.activate(row2, col2);
+        access(row2, col2)->iscoin = true;
+
+        int row3 = rand() % rows;
+        int col3 = rand() % cols;
+        while (access(row3, col3)->isdoor == 1 || access(row3, col3)->iskey == 1 || access(row3, col3)->iscoin == 1)
+        {
+            row3 = rand() % rows;
+            col3 = rand() % cols;
+        }
+        c2.activate(row3, col3);
+        access(row3, col3)->iscoin = true;
+
+        int row4 = rand() % rows;
+        int col4 = rand() % cols;
+        while (access(row4, col4)->isdoor == 1 || access(row4, col4)->iskey == 1 || access(row4, col4)->iscoin == 1)
+        {
+            row4 = rand() % rows;
+            col4 = rand() % cols;
+        }
+        c2.activate(row4, col4);
+        access(row4, col4)->iscoin = true;
     }
 
     int cityblockdistance(Node *n1, Node *n2)
