@@ -57,18 +57,16 @@ public:
             top = nullptr;
             return;
         }
-        node *ptr = top;
-        while (ptr->next->next != nullptr)
-            ptr = ptr->next;
-        delete ptr->next;
-        ptr->next = nullptr;
+        node *temp = top;
+        top = top->next;
+        delete temp;
     }
     void display()
     {
         node *temp = top;
         while (temp != nullptr)
         {
-            cout << temp->data << " , ";
+            cout << temp->data1 << " - " << temp->data2 << " , ";
             temp = temp->next;
         }
         cout << endl;
@@ -79,6 +77,7 @@ class Node
 {
 public:
     bool isplayer, iskey, isdoor, iscoin, isbomb;
+    int r, c;
     Node *up;
     Node *down;
     Node *right;
@@ -88,6 +87,7 @@ public:
     {
         isplayer = iskey = isdoor = iscoin = isbomb = false;
         up = down = right = left = nullptr;
+        r = c = -1;
     }
 };
 
@@ -174,12 +174,11 @@ public:
     }
 };
 
-class coin
+class coin : public Node
 {
 public:
     int r, c;
-    bool iscoin;
-    Coin()
+    coin()
     {
         iscoin = false;
         r = c = -1;
@@ -200,12 +199,12 @@ class Bomb
 public:
     int r, c;
     bool isbomb;
-    Coin()
+    Bomb()
     {
         isbomb = false;
         r = c = -1;
     }
-    Coin(int r, int c)
+    Bomb(int r, int c)
     {
         this->r = r;
         this->c = c;
@@ -222,18 +221,16 @@ public:
     Node *start;
     Node *key;
     Node *door;
-    Node *coins;
+    // Node *coins;
     Node *bombs;
     Player *player; // player object is created here
-    int row_key, col_key, row_exit, col_exit;
     int rows, cols;
     // int index_bombs[5][2];
-
-    coin coins[5];
-    coin c1, c2, c3, c4, c5;
+    // coin coins[5];
+    Node *c1, *c2, *c3, *c4, *c5;
     stack coin_s;
-    int total_coins;
     int collected_coins;
+    int row_exit, col_exit, row_key, col_key;
 
     Maze(int r_, int c_)
     {
@@ -242,10 +239,9 @@ public:
         start = new Node[rows * cols];
         setting_links();
         placeing_keynexit();
+        place_coins();
         player = new Player(start);
-
         collected_coins = 0;
-        total_coins = 0;
     }
 
     int absolutevalue(int v)
@@ -298,59 +294,29 @@ public:
         col_key = col;
     }
 
-    void place_coins(int n)
+    void place_coins()
     {
-        total_coins = n;
+        srand(time(0));
+        c1 = place_coin();
+        c2 = place_coin();
+        c3 = place_coin();
+        c4 = place_coin();
+        c5 = place_coin();
+    }
 
-        int row = rand() % rows;
-        int col = rand() % cols;
-        while (access(row, col)->isdoor == 1 || access(row, col)->iskey == 1 || access(row1, col1)->iscoin == 1)
+    Node *place_coin()
+    {
+        int row, col;
+        do
         {
             row = rand() % rows;
             col = rand() % cols;
-        }
-        c1.activate(row, col);
-        access(row, col)->iscoin = true;
-
-        int row1 = rand() % rows;
-        int col1 = rand() % cols;
-        while (access(row1, col1)->isdoor == 1 || access(row1, col1)->iskey == 1 || access(row1, col1)->iscoin == 1)
-        {
-            row1 = rand() % rows;
-            col1 = rand() % cols;
-        }
-        c2.activate(row1, col1);
-        access(row1, col1)->iscoin = true;
-
-        int row2 = rand() % rows;
-        int col2 = rand() % cols;
-        while (access(row2, col2)->isdoor == 1 || access(row2, col2)->iskey == 1 || access(row2, col2)->iscoin == 1)
-        {
-            row2 = rand() % rows;
-            col2 = rand() % cols;
-        }
-        c2.activate(row2, col2);
-        access(row2, col2)->iscoin = true;
-
-        int row3 = rand() % rows;
-        int col3 = rand() % cols;
-        while (access(row3, col3)->isdoor == 1 || access(row3, col3)->iskey == 1 || access(row3, col3)->iscoin == 1)
-        {
-            row3 = rand() % rows;
-            col3 = rand() % cols;
-        }
-        c2.activate(row3, col3);
-        access(row3, col3)->iscoin = true;
-
-        int row4 = rand() % rows;
-        int col4 = rand() % cols;
-        while (access(row4, col4)->isdoor == 1 || access(row4, col4)->iskey == 1 || access(row4, col4)->iscoin == 1)
-        {
-            row4 = rand() % rows;
-            col4 = rand() % cols;
-        }
-        c2.activate(row4, col4);
-        access(row4, col4)->iscoin = true;
+        } while (access(row, col)->isdoor == 1 || access(row, col)->iskey == 1 || access(row, col)->iscoin == 1);
+        Node *c = access(row, col);
+        c->iscoin = true;
+        c->r = row;
+        c->c = col;
+        return c;
     }
 
     int cityblockdistance(Node *n1, Node *n2)
@@ -388,6 +354,18 @@ public:
     Node *access(int r, int c)
     {
         return &start[r * cols + c];
+    }
+
+    void collect_coins(Node *c)
+    {
+        if (c->iscoin == 1)
+        {
+            c->iscoin = 0;
+            player->undo++;
+            collected_coins++;
+            coin_s.push(c->r, c->c);
+            coin_s.display();
+        }
     }
 
     void print()
@@ -485,6 +463,7 @@ public:
 
             if (maze->player->player_node == maze->door && iskeygot)
                 mvprintw(maze->rows + 7, 0, "YOU ESCAPEd SUCCESS");
+
             refresh();
 
             a = getch();
@@ -496,6 +475,7 @@ public:
             {
                 game_move(a);
             }
+
             if (maze->player->player_node == maze->key && !iskeygot)
             {
                 refresh();
@@ -509,6 +489,7 @@ public:
                 refresh();
                 break;
             }
+            maze->collect_coins(maze->player->player_node);
         }
         game_over();
     }
@@ -516,18 +497,14 @@ public:
     void game_over()
     {
         clear();
-        while (1)
-        {
-            if (maze->door->isdoor == false)
-                mvprintw(0, 0, "YOU WON");
-            else
-                mvprintw(0, 0, "GAME OVER");
-            mvprintw(2, 0, "Press q to exit");
-            int a = getch();
-            if (a == 'q')
-                exit(1);
-            refresh();
-        }
+
+        if (maze->door->isdoor == false)
+            mvprintw(0, 0, "YOU WON");
+        else
+            mvprintw(0, 0, "GAME OVER");
+        mvprintw(2, 0, "Press q to exit");
+        while (getch() != 'q')
+            ;
     }
 
     void game_move(int a)
