@@ -329,7 +329,7 @@ public:
 
     void update_coins_n_bombs()
     {
-        if (difftime(time(0), coin_timer) >= 3)
+        if (difftime(time(0), coin_timer) >= 10)
         {
             remove_coins_bombs();
             place_coins();
@@ -415,9 +415,9 @@ public:
                 }
                 // 2 . green _ 4.red
                 else if (nn->iskey)
-                    printw(". ");
+                    printw("K ");
                 else if (nn->isdoor)
-                    printw(". ");
+                    printw("D ");
                 else if (nn->isbomb)
                 {
                     attron(COLOR_PAIR(1));
