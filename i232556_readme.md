@@ -72,7 +72,7 @@ In Maze Adventure, players must explore a randomly generated maze, collecting co
    ./maze_game
    ```
 
-![Appearance on Terminal]("./cmd_on_terminal.png")
+![Appearance on Terminal](./cmd_on_terminal.png)
 
 4. You will be prompted to choose the difficulty level:
 
@@ -88,13 +88,13 @@ In Maze Adventure, players must explore a randomly generated maze, collecting co
 ## Screenshots
 
 - Initial Stage
-  ![Gameplay]("./no_win_lose.png")
+  ![Gameplay](./no_win_lose.png)
 
 - When You Win! after successfully collecting key and exiting
-  ![Win]("./win.png")
+  ![Win](./win.png)
 
 - When You lose. This appears
-  ![Lose]("./lose.png")
+  ![Lose](./lose.png)
 
 ## Dependencies
 
