@@ -4,10 +4,8 @@
 
 #include <iostream>
 #include <cstdlib>
-#include <string>
 #include <ctime>
 #include <ncurses.h>
-#include <unistd.h>
 
 using namespace std;
 
@@ -331,7 +329,7 @@ public:
 
     void update_coins_n_bombs()
     {
-        if (difftime(time(0), coin_timer) >= 10)
+        if (difftime(time(0), coin_timer) >= 3)
         {
             remove_coins_bombs();
             place_coins();
@@ -357,9 +355,9 @@ public:
         int d = cityblockdistance(player->player_node, key);
         attron(COLOR_PAIR(5));
         if (!player->undo_feature.isempty() && d < cityblockdistance(player->undo_feature.peek(), key))
-            mvprintw(6, 0, "        Getting closer to key");
+            mvprintw(6, 0, "        Getting CLOSER to key");
         else
-            mvprintw(6, 0, "        Getting away from key");
+            mvprintw(6, 0, "        Getting AWAY from key");
         attroff(COLOR_PAIR(5));
         // cout << "away";
         refresh();
@@ -369,9 +367,9 @@ public:
         int d = cityblockdistance(player->player_node, door);
         attron(COLOR_PAIR(5));
         if (!player->undo_feature.isempty() && d < cityblockdistance(player->undo_feature.peek(), key))
-            mvprintw(6, 0, "        Getting closer to exit door");
+            mvprintw(6, 0, "        Getting CLOSER to exit door");
         else
-            mvprintw(6, 0, "        Getting away from exit door");
+            mvprintw(6, 0, "        Getting AWAY from exit door");
         attroff(COLOR_PAIR(5));
         refresh();
     }
@@ -470,16 +468,20 @@ public:
                     attroff(COLOR_PAIR(3));
                 }
                 // 2 . green _ 4.red
-                else if (nn->iskey)
-                    printw("K ");
-                else if (nn->isdoor)
-                    printw("D ");
-                else if (nn->isbomb)
-                    printw("B ");
                 else if (nn->iscoin)
+                    printw("C ");
+                else if (nn->isdoor)
                 {
                     attron(COLOR_PAIR(4));
-                    printw("C "); // yellow
+                    printw("D "); // yellow
+                    attroff(COLOR_PAIR(4));
+                }
+                else if (nn->isbomb)
+                    printw("B ");
+                else if (nn->iskey)
+                {
+                    attron(COLOR_PAIR(4));
+                    printw("K "); // yellow
                     attroff(COLOR_PAIR(4));
                 }
                 else
@@ -570,6 +572,7 @@ public:
             else if (a == 'q')
             {
                 game_over();
+                break;
             }
             else
             {
