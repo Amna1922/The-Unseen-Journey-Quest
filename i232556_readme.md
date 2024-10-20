@@ -87,13 +87,13 @@ In Maze Adventure, players must explore a randomly generated maze, collecting co
 
 ## Screenshots
 
-- Initial Stage
+- Initial Stage\***\*\*\*\*\***\*\*\***\*\*\*\*\***\_\***\*\*\*\*\***\*\*\***\*\*\*\*\***
   ![Gameplay](./no_win_lose.png)
 
 - When You Win! after successfully collecting key and exiting
   ![Win](./win.png)
 
-- When You lose. This appears
+- When You lose. This appears **\*\***\*\***\*\***\_\_**\*\***\*\***\*\***
   ![Lose](./lose.png)
 
 ## Dependencies
