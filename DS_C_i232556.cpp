@@ -197,6 +197,7 @@ public:
     Player *player; // player object is created here
     int rows, cols;
     Node *c1, *c2, *c3, *c4, *c5;
+    Node *b1, *b2, *b3, *b4, *b5;
     stack coin_s;
     int collected_coins;
     int row_exit, col_exit, row_key, col_key;
@@ -210,6 +211,7 @@ public:
         setting_links();
         placeing_keynexit();
         place_coins();
+        place_bombs();
         player = new Player(start);
         collected_coins = 0;
         coin_timer = time(0);
@@ -274,13 +276,28 @@ public:
         c4 = place_coin();
         c5 = place_coin();
     }
-    void remove_coins()
+    void place_bombs()
+    {
+        srand(time(0));
+        b1 = place_bomb();
+        b2 = place_bomb();
+        b3 = place_bomb();
+        b4 = place_bomb();
+        b5 = place_bomb();
+    }
+    void remove_coins_bombs()
     {
         c1->iscoin = 0;
         c2->iscoin = 0;
         c3->iscoin = 0;
         c4->iscoin = 0;
         c5->iscoin = 0;
+
+        b1->isbomb = 0;
+        b2->isbomb = 0;
+        b3->isbomb = 0;
+        b4->isbomb = 0;
+        b5->isbomb = 0;
     }
 
     Node *place_coin()
@@ -290,20 +307,35 @@ public:
         {
             row = rand() % rows;
             col = rand() % cols;
-        } while (access(row, col)->isdoor == 1 || access(row, col)->iskey == 1 || access(row, col)->iscoin == 1);
+        } while (access(row, col)->isplayer == 1 || access(row, col)->isdoor == 1 || access(row, col)->iskey == 1 || access(row, col)->iscoin == 1 || access(row, col)->isbomb == 1);
         Node *c = access(row, col);
         c->iscoin = true;
         c->r = row;
         c->c = col;
         return c;
     }
-
-    void update_coins()
+    Node *place_bomb()
     {
-        if (difftime(time(0), coin_timer) >= 15)
+        int row, col;
+        do
         {
-            remove_coins();
+            row = rand() % rows;
+            col = rand() % cols;
+        } while (access(row, col)->isplayer == 1 || access(row, col)->isdoor == 1 || access(row, col)->iskey == 1 || access(row, col)->iscoin == 1 || access(row, col)->isbomb == 1);
+        Node *c = access(row, col);
+        c->isbomb = true;
+        c->r = row;
+        c->c = col;
+        return c;
+    }
+
+    void update_coins_n_bombs()
+    {
+        if (difftime(time(0), coin_timer) >= 10)
+        {
+            remove_coins_bombs();
             place_coins();
+            place_bombs();
             coin_timer = time(0);
         }
     }
@@ -358,7 +390,7 @@ public:
             player->player_score += 2;
             collected_coins++;
             coin_s.push(c->r, c->c);
-            coin_s.display();
+            // coin_s.display();
         }
     }
 
@@ -385,11 +417,15 @@ public:
                 }
                 // 2 . green _ 4.red
                 else if (nn->iskey)
-                    printw("K ");
+                    printw(". ");
                 else if (nn->isdoor)
-                    printw("D ");
+                    printw(". ");
                 else if (nn->isbomb)
+                {
+                    attron(COLOR_PAIR(1));
                     printw("B ");
+                    attroff(COLOR_PAIR(1));
+                }
                 else if (nn->iscoin)
                 {
                     attron(COLOR_PAIR(4));
@@ -472,7 +508,7 @@ public:
         {
             grid = 10;
             undo = 6;
-            moves = 50;
+            moves = 6;
         }
         else if (l == 2)
         {
@@ -500,7 +536,7 @@ public:
         while (maze->player->player_moves > 0)
         {
             bool check = true;
-            maze->update_coins();
+            maze->update_coins_n_bombs();
             maze->print();
 
             mvprintw(0, 0, "__________________________________________________");
@@ -531,6 +567,10 @@ public:
             {
                 maze->player->undo_z();
             }
+            else if (a == 'q')
+            {
+                game_over();
+            }
             else
             {
                 game_move(a);
@@ -549,10 +589,24 @@ public:
                 refresh();
                 break;
             }
+            if (maze->player->player_node->isbomb == 1)
+            {
+                maze->player->player_node->isbomb = 0;
+                game_over();
+                refresh();
+                break;
+            }
             maze->collect_coins(maze->player->player_node);
         }
         game_over();
     }
+
+    // void collect_bombs(Node *c)
+    // {
+    //     if (c->isbomb == 1 && maze->player->player_node == c)
+    //     {
+    //     }
+    // }
 
     void start_display_gameover()
     {
@@ -683,24 +737,37 @@ public:
 int main()
 {
     int i;
-    cout << "Select level ";
-    cin >> i;
-    initscr(); // Start ncurses mode
-    start_color();
-    keypad(stdscr, TRUE); // Enable keypad for arrow keys
-    noecho();             // Don't show typed characters
-    cbreak();             // Disable line buffering
+    bool check = true;
+    do
+    {
+        cout << "Select level (1 ,2 ,3) ";
+        cin >> i;
+        if (i == 1 || i == 2 || i == 3)
+        {
+            initscr(); // Start ncurses mode
+            start_color();
+            keypad(stdscr, TRUE); // Enable keypad for arrow keys
+            noecho();             // Don't show typed characters
+            cbreak();             // Disable line buffering
 
-    init_pair(1, COLOR_RED, COLOR_BLACK);
-    init_pair(2, COLOR_GREEN, COLOR_BLACK);
-    init_pair(3, COLOR_BLUE, COLOR_BLACK);
-    init_pair(4, COLOR_YELLOW, COLOR_BLACK);
-    init_pair(5, COLOR_MAGENTA, COLOR_BLACK);
-    init_pair(6, COLOR_CYAN, COLOR_BLACK);
+            init_pair(1, COLOR_RED, COLOR_BLACK);
+            init_pair(2, COLOR_GREEN, COLOR_BLACK);
+            init_pair(3, COLOR_BLUE, COLOR_BLACK);
+            init_pair(4, COLOR_YELLOW, COLOR_BLACK);
+            init_pair(5, COLOR_MAGENTA, COLOR_BLACK);
+            init_pair(6, COLOR_CYAN, COLOR_BLACK);
 
-    GAME g(i);
-    g.start();
+            GAME g(i);
+            g.start();
 
-    endwin(); // ending ncurse mode
+            endwin(); // ending ncurse mode
+            check = false;
+        }
+        else
+        {
+            cout << "Invalid Input!!\n";
+            check = true;
+        }
+    } while (check);
     return 0;
 }
